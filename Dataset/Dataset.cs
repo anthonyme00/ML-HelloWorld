@@ -27,21 +27,18 @@ namespace MachineLearning.Dataset
                     Array.Reverse(infoBuffer);
                 }
                 Int32 dataCount = BitConverter.ToInt32(infoBuffer);
-                Console.WriteLine(string.Format("Images in dataset: {0}", dataCount));
                 fs.Read(infoBuffer, 0, 4);
                 if (BitConverter.IsLittleEndian)
                 {
                     Array.Reverse(infoBuffer);
                 }
                 Int32 rowCount = BitConverter.ToInt32(infoBuffer);
-                Console.WriteLine(string.Format("Number of rows: {0}", rowCount));
                 fs.Read(infoBuffer, 0, 4);
                 if (BitConverter.IsLittleEndian)
                 {
                     Array.Reverse(infoBuffer);
                 }
                 Int32 colCount = BitConverter.ToInt32(infoBuffer);
-                Console.WriteLine(string.Format("Number of cols: {0}", colCount));
 
                 dataset.Count = dataCount;
                 dataset.RowCount = rowCount;

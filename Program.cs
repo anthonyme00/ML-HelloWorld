@@ -11,62 +11,57 @@ namespace MachineLearning
         {
             ImageLabelSet dataset = ImageLabelSet.LoadDataset("dataset/train-images.idx3-ubyte", "dataset/train-labels.idx1-ubyte");
 
-            Console.WriteLine(dataset.Count);
-            Console.WriteLine(dataset.RowCount);
-            Console.WriteLine(dataset.ColumnCount);
-            Console.WriteLine(dataset.Labels.Length);
+            Console.WriteLine(string.Format("Images in dataset: {0}", dataset.Count));
+            Console.WriteLine(string.Format("Row : {0}", dataset.RowCount));
+            Console.WriteLine(string.Format("Column : {0}", dataset.ColumnCount));
 
             int bytesPerImage = dataset.RowCount * dataset.ColumnCount;
             Network network = new Network(bytesPerImage, 10, 0.1f);
-            network.AddLayer(new Layer(32, Activation.Relu));
-            network.AddLayer(new Layer(16, Activation.Relu));
+            network.AddLayer(new Layer(16, Activation.Sigmoid));
+            network.AddLayer(new Layer(16, Activation.Sigmoid));
             network.Build();
 
             float[] learningData = new float[bytesPerImage];
             float[] expectedData = new float[10];
             float[] output = new float[10];
 
-            for (int i = 0; i < dataset.Count; i++)
+            
+            for (int epoch = 0; epoch < 100; epoch++)
             {
-                for (int y = 0; y < dataset.RowCount; y++)
+                Console.WriteLine(string.Format("Starting epoch {0}", epoch));
+                float cost = 0;
+                for (int i = 0; i < dataset.Count; i++)
                 {
-                    for (int x = 0; x < dataset.ColumnCount; x++)
+                    for (int j = 0; j < bytesPerImage; j++)
                     {
-                        learningData[dataset.ColumnCount * y + x] = (float)dataset.Data[i * dataset.ColumnCount * dataset.RowCount + y * dataset.ColumnCount + x] / 255.0f;
+                        learningData[j] = (float)dataset.Data[i * bytesPerImage + j] / 255.0f;
+                    }
 
-                        if (dataset.Data[i * dataset.ColumnCount * dataset.RowCount + y * dataset.ColumnCount + x] > 127)
+                    for (int j = 0; j < 10; j++)
+                    {
+                        if (j == (int)dataset.Labels[i])
                         {
-                            Console.Write("#");
+                            expectedData[j] = 1.0f;
                         }
                         else
                         {
-                            Console.Write(" ");
+                            expectedData[j] = 0.0f;
                         }
                     }
-                    Console.Write("\n");
-                }
-                Console.WriteLine("Number is: " + dataset.Labels[i]);
 
-                for (int j = 0; j < 10; j++)
-                {
-                    if (j == (int)dataset.Labels[i])
+                    network.Predict(learningData);
+                    network.Train(expectedData);
+                    cost += network.CalculateCost(expectedData);
+
+                    if (i % 5000 == 0)
                     {
-                        expectedData[j] = 1.0f;
-                    }
-                    else
-                    {
-                        expectedData[j] = 0.0f;
+                        Console.WriteLine(string.Format("{0,4:F2}% done", ((float)i /dataset.Count)*100f));
                     }
                 }
-
-                network.Predict(learningData);
-                output = network.Train(expectedData);
-                for (int j = 0; j < 10; j++)
-                {
-                    Console.Write(string.Format("{0} - {1}%; ", j, output[j] * 100));
-                }
-                Console.WriteLine(string.Format("\nCost is: {0}\n", network.CalculateCost(expectedData)));
-            }                     
+                Console.WriteLine(string.Format("Current cost : {0}\nEpoch : {1}", cost/dataset.Count, epoch));
+                network.ApplyChanges();
+            }
+                      
         }
     }
 }

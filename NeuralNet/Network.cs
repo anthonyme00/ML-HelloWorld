@@ -53,17 +53,19 @@ namespace MachineLearning.NeuralNet
             return m_outputLayer.CalculateCost(expected);
         }
 
-        public float[] Train(float[] expected)
+        public void Train(float[] expected)
         {
-            if (expected.Length != m_outputLayer.nodeCount)
-            {
-                throw new Exception("Data mismatch!");
-            }
-
             float[] output = m_outputLayer.GetOutput();
             m_outputLayer.Backpropagate(expected, learningSpeed);
+        }
 
-            return output;
+        public void ApplyChanges()
+        {
+            m_inputLayer.ApplyChanges();
+            foreach(Layer layer in m_layers)
+            {
+                layer.ApplyChanges();
+            }
         }
 
         public float[] Predict(float[] data)

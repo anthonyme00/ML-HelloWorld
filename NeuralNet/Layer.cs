@@ -11,6 +11,10 @@ namespace MachineLearning.NeuralNet
         protected float[] inputs;
         private float[] weights;
         private float[] biases;
+
+        private float[] deltaWeights;
+        private float[] deltaBiases;
+        private int trainingCount;
         
         private Layer previousLayer;
         private Layer nextLayer;
@@ -47,6 +51,8 @@ namespace MachineLearning.NeuralNet
             {
                 this.biases = new float[nextLayer.nodeCount];
                 this.weights = new float[nextLayer.nodeCount * this.nodeCount];
+                this.deltaBiases = new float[nextLayer.nodeCount];
+                this.deltaWeights = new float[nextLayer.nodeCount * this.nodeCount];
 
                 byte[] seed = new byte[4];
                 seedGenerator.GetBytes(seed);
@@ -54,10 +60,10 @@ namespace MachineLearning.NeuralNet
 
                 for (int i = 0; i < nextLayer.nodeCount; i++)
                 {
-                    biases[i] = (float)rand.NextDouble();
+                    biases[i] = (float)(rand.NextDouble()-0.5) * 2f;
                     for (int j = 0; j < nodeCount; j++)
                     {
-                        weights[i * nodeCount + j] = (float)rand.NextDouble();
+                        weights[i * nodeCount + j] = (float)(rand.NextDouble()-0.5)*2f;
                     }
                 }
             }
@@ -73,10 +79,9 @@ namespace MachineLearning.NeuralNet
             {
                 throw new Exception("Input exceeds or is lower than node count!");
             }
+            previousLayer.trainingCount++;
 
             float[] backpropagateTargetValue = new float[previousLayer.nodeCount];
-            //float[] deltaWeights = new float[previousLayer.nodeCount * nodeCount];
-            //float[] deltaBias = new float[nodeCount];
             float[] myOutputs = GetOutput();
 
             for (int j = 0; j < nodeCount; j++)
@@ -84,17 +89,29 @@ namespace MachineLearning.NeuralNet
                 float error = targetValue[j] - myOutputs[j];
                 for (int i = 0; i < previousLayer.nodeCount; i++)
                 {
-                    int weightIndex = i * nodeCount + j;
-
+                    int weightIndex = previousLayer.NodeToNodeWeightIndex(i, j);
                     float delta = previousLayer.weights[weightIndex] * error * learningRate;
-                    previousLayer.weights[weightIndex] += delta;
+                    previousLayer.deltaWeights[weightIndex] += delta;
                     backpropagateTargetValue[i] += delta/nodeCount;
                 }
 
-                previousLayer.biases[j] += error * learningRate;
+                previousLayer.deltaBiases[j] += error * learningRate;
             }
 
             previousLayer.Backpropagate(backpropagateTargetValue, learningRate);
+        }
+
+        public virtual void ApplyChanges()
+        {
+            for (int i = 0; i < weights.Length; i++)
+            {
+                weights[i] += deltaWeights[i]/trainingCount;
+            }
+            for (int i = 0; i < biases.Length; i++)
+            {
+                biases[i] += deltaBiases[i]/trainingCount;
+            }
+            trainingCount = 0;
         }
 
         public virtual void Predict()
@@ -108,7 +125,7 @@ namespace MachineLearning.NeuralNet
             {
                 for (int inputIndex = 0; inputIndex < nextLayer.nodeCount; inputIndex++)
                 {
-                    int weightIndex = nodeIndex * nextLayer.nodeCount + inputIndex;
+                    int weightIndex = NodeToNodeWeightIndex(nodeIndex, inputIndex);//nodeIndex * nextLayer.nodeCount + inputIndex;
                     nextLayer.inputs[inputIndex] += inputs[nodeIndex] * weights[weightIndex];
                 }
             }
@@ -117,7 +134,12 @@ namespace MachineLearning.NeuralNet
                 nextLayer.inputs[nodeIndex] = nextLayer.activationFunction(nextLayer.inputs[nodeIndex]);
             }
             nextLayer.Predict();
-        }        
+        }
+
+        private int NodeToNodeWeightIndex(int thisLayerIndex, int nextLayerIndex)
+        {
+            return thisLayerIndex * nextLayer.nodeCount + nextLayerIndex;
+        }
     }
 
     public class InputLayer : Layer
