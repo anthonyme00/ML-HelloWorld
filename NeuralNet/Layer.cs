@@ -6,18 +6,18 @@ namespace MachineLearning.NeuralNet
     public class Layer
     {
         public int nodeCount { get; private set; }
-        public Func<float, float> activationFunction { get; private set; }
+        public ActivationSet activation { get; private set; }
 
         protected float[] inputs;
-        private float[] weights;
-        private float[] biases;
+        protected float[] weights;
+        protected float[] biases;
 
-        private float[] deltaWeights;
-        private float[] deltaBiases;
-        private int trainingCount;
-        
-        private Layer previousLayer;
-        private Layer nextLayer;
+        protected float[] deltaWeights;
+        protected float[] deltaBiases;
+        protected int trainingCount;
+
+        protected Layer previousLayer;
+        protected Layer nextLayer;
 
         private static RandomNumberGenerator seedGenerator;
 
@@ -28,20 +28,20 @@ namespace MachineLearning.NeuralNet
 
             for (int i = 0; i < nodeCount; i++)
             {
-                outputs[i] = activationFunction(outputs[i]);
+                outputs[i] = activation.activationFunc(outputs[i]);
             }
 
             return outputs;
         }
 
-        public Layer(int nodeCount, Func<float, float> activationFunction)
+        public Layer(int nodeCount, ActivationSet activation)
         {
             if (seedGenerator == null)
             {
                 seedGenerator = RandomNumberGenerator.Create();
             }
             this.nodeCount = nodeCount;
-            this.activationFunction = activationFunction;
+            this.activation = activation;
             this.inputs = new float[nodeCount];
         }
 
@@ -60,56 +60,29 @@ namespace MachineLearning.NeuralNet
 
                 for (int i = 0; i < nextLayer.nodeCount; i++)
                 {
-                    biases[i] = (float)(rand.NextDouble()-0.5) * 2f;
                     for (int j = 0; j < nodeCount; j++)
                     {
-                        weights[i * nodeCount + j] = (float)(rand.NextDouble()-0.5)*2f;
+                        weights[i * nodeCount + j] = (float)(rand.NextDouble()-0.5);
                     }
                 }
             }
             
             this.previousLayer = previousLayer;
             this.nextLayer = nextLayer;
-        }
-
-        public virtual void Backpropagate(float[] targetValue, float learningRate)
-        {
-            if (previousLayer == null) return;
-            if (targetValue.Length != nodeCount)
-            {
-                throw new Exception("Input exceeds or is lower than node count!");
-            }
-            previousLayer.trainingCount++;
-
-            float[] backpropagateTargetValue = new float[previousLayer.nodeCount];
-            float[] myOutputs = GetOutput();
-
-            for (int j = 0; j < nodeCount; j++)
-            {
-                float error = targetValue[j] - myOutputs[j];
-                for (int i = 0; i < previousLayer.nodeCount; i++)
-                {
-                    int weightIndex = previousLayer.NodeToNodeWeightIndex(i, j);
-                    float delta = previousLayer.weights[weightIndex] * error * learningRate;
-                    previousLayer.deltaWeights[weightIndex] += delta;
-                    backpropagateTargetValue[i] += delta/nodeCount;
-                }
-
-                previousLayer.deltaBiases[j] += error * learningRate;
-            }
-
-            previousLayer.Backpropagate(backpropagateTargetValue, learningRate);
-        }
+        }        
 
         public virtual void ApplyChanges()
         {
+            if (trainingCount == 0) return;
             for (int i = 0; i < weights.Length; i++)
             {
-                weights[i] += deltaWeights[i]/trainingCount;
+                weights[i] += deltaWeights[i] / trainingCount;
+                deltaWeights[i] = 0;
             }
             for (int i = 0; i < biases.Length; i++)
             {
-                biases[i] += deltaBiases[i]/trainingCount;
+                biases[i] += deltaBiases[i] / trainingCount;
+                deltaBiases[i] = 0;
             }
             trainingCount = 0;
         }
@@ -125,18 +98,54 @@ namespace MachineLearning.NeuralNet
             {
                 for (int inputIndex = 0; inputIndex < nextLayer.nodeCount; inputIndex++)
                 {
-                    int weightIndex = NodeToNodeWeightIndex(nodeIndex, inputIndex);//nodeIndex * nextLayer.nodeCount + inputIndex;
-                    nextLayer.inputs[inputIndex] += inputs[nodeIndex] * weights[weightIndex];
+                    int weightIndex = NodeToNodeWeightIndex(nodeIndex, inputIndex);
+                    nextLayer.inputs[inputIndex] += activation.activationFunc(inputs[nodeIndex]) * weights[weightIndex];
                 }
-            }
-            for (int nodeIndex = 0; nodeIndex < nextLayer.nodeCount; nodeIndex++)
-            {
-                nextLayer.inputs[nodeIndex] = nextLayer.activationFunction(nextLayer.inputs[nodeIndex]);
             }
             nextLayer.Predict();
         }
 
-        private int NodeToNodeWeightIndex(int thisLayerIndex, int nextLayerIndex)
+        public virtual void Backpropagate(float[] activationToCostChange, float learningRate)
+        {
+            if (activationToCostChange.Length != nodeCount)
+            {
+                throw new Exception("Input exceeds or is lower than node count!");
+            }
+
+            trainingCount++;
+
+            float[] output = GetOutput();
+            for (int i = 0; i < nodeCount; i++)
+            {
+                for (int j = 0; j < nextLayer.nodeCount; j++)
+                {
+                    deltaWeights[NodeToNodeWeightIndex(i, j)] += output[i] * activationToCostChange[i] * learningRate;
+                }
+            }
+            for (int i = 0; i < nextLayer.nodeCount; i++)
+            {
+                deltaBiases[i] += activationToCostChange[i] * learningRate;
+            }
+
+            if (previousLayer == null) return;
+
+            float[] previousLayerChange = new float[previousLayer.nodeCount];
+
+            for (int i = 0; i < nodeCount; i++)
+            {
+                for (int j = 0; j < nextLayer.nodeCount; j++)
+                {
+                    for (int k = 0; k < previousLayer.nodeCount; k++)
+                    {
+                        previousLayerChange[k] += activation.derivativeFunc(inputs[i]) * weights[NodeToNodeWeightIndex(i, j)] * activationToCostChange[i];
+                    }
+                }                
+            }
+
+            previousLayer.Backpropagate(previousLayerChange, learningRate);
+        }
+
+        protected int NodeToNodeWeightIndex(int thisLayerIndex, int nextLayerIndex)
         {
             return thisLayerIndex * nextLayer.nodeCount + nextLayerIndex;
         }
@@ -144,7 +153,7 @@ namespace MachineLearning.NeuralNet
 
     public class InputLayer : Layer
     {
-        public InputLayer(int nodeCount) : base(nodeCount, Activation.Relu) { }
+        public InputLayer(int nodeCount) : base(nodeCount, Activation.Pass) { }
         
         public virtual void FeedInput(float[] input)
         {
@@ -161,7 +170,7 @@ namespace MachineLearning.NeuralNet
 
     public class OutputLayer : Layer
     {
-        public OutputLayer(int nodeCount) : base(nodeCount, Activation.LinearClamped) { }
+        public OutputLayer(int nodeCount) : base(nodeCount, Activation.Sigmoid) { }
 
         public virtual float CalculateCost(float[] intendedValue)
         {
@@ -180,6 +189,28 @@ namespace MachineLearning.NeuralNet
             }
 
             return cost;
+        }
+
+        public override void Backpropagate(float[] targetValue, float learningRate)
+        {
+            if (targetValue.Length != nodeCount)
+            {
+                throw new Exception("Input exceeds or is lower than node count!");
+            }
+
+            float[] output = GetOutput();
+            float[] layerChange = new float[previousLayer.nodeCount];
+            for (int i = 0; i < nodeCount; i++)
+            {
+                float costOfLayer = output[i] - targetValue[i];
+                float activationToCostChange = activation.derivativeFunc(inputs[i]) * 2 * costOfLayer;
+                for (int j = 0; j < previousLayer.nodeCount; j++)
+                {
+                    layerChange[j] += activationToCostChange;
+                }
+            }
+
+            previousLayer.Backpropagate(layerChange, learningRate);
         }
     }
 }

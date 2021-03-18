@@ -55,7 +55,6 @@ namespace MachineLearning.NeuralNet
 
         public void Train(float[] expected)
         {
-            float[] output = m_outputLayer.GetOutput();
             m_outputLayer.Backpropagate(expected, learningSpeed);
         }
 
