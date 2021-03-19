@@ -1,7 +1,6 @@
 ﻿using MachineLearning.NeuralNet;
 using MachineLearning.Dataset;
 using System;
-using System.IO;
 using System.Collections.Generic;
 
 namespace MachineLearning
@@ -12,7 +11,6 @@ namespace MachineLearning
         {
             float learningStep = 0.005f;
             int epochCount = 100;
-            //float costCutoff = 0.05f;
             int batchCount = 100;
 
             ImageLabelSet dataset = ImageLabelSet.LoadDataset("dataset/train-images.idx3-ubyte", "dataset/train-labels.idx1-ubyte");
@@ -32,9 +30,8 @@ namespace MachineLearning
             float[] expectedData = new float[10];
             float[] output = new float[10];
 
-            Console.WriteLine(string.Format("Starting training; epoch count : {0}; batch size : {1}; learning speed : {2,4:F2}", epochCount, batchCount, learningStep));
+            Console.WriteLine(string.Format("Starting training; epoch count : {0}; batch size : {1}; learning step : {2,4:F2}", epochCount, batchCount, learningStep));
 
-            float cost = 100;
             Random rand = new Random();
             List<int> datasetList = new List<int>(dataset.Count);
             for (int epoch = 0; epoch < epochCount; epoch++)
@@ -44,7 +41,7 @@ namespace MachineLearning
                     datasetList.Add(i);
                 }
 
-                cost = 0;
+                float cost = 0;
                 Console.WriteLine(string.Format("Starting epoch {0}", epoch));
                 int trainedCount = 0;
                 for (int i = 0; i < dataset.Count; i++)
