@@ -9,8 +9,8 @@ namespace MachineLearning
     {
         static void Main(string[] args)
         {
-            float learningStep = 0.005f;
-            int epochCount = 100;
+            float learningStep = 0.0025f;
+            int epochCount = 200;
             int batchCount = 100;
 
             ILabeledData trainingSet = MNISTDataset.LoadDataset("dataset/train-images.idx3-ubyte", "dataset/train-labels.idx1-ubyte");
@@ -44,7 +44,10 @@ namespace MachineLearning
                     correctPrediction++;
                 }
             }
-            Console.WriteLine(string.Format("Cost : {0,4:F2}\nCorrect percentage : {1,4:F2}", cost, ((float)correctPrediction / total) * 100f));
+            Console.WriteLine(string.Format("Cost : {0,4:F2}\nCorrect percentage : {1,4:F2}", cost/total, ((float)correctPrediction / total) * 100f));
+
+            Console.WriteLine(string.Format("Press any key to continue.."));
+            Console.ReadKey(true);
 
             Random rand = new Random();
             while (true)
@@ -52,42 +55,7 @@ namespace MachineLearning
                 int id = rand.Next(0, trainingSet.GetDataCount());
 
                 float[] input = trainingSet.GetInput(id);
-                for (int y = 0; y < 28; y++)
-                {
-                    for (int x = 0; x < 28; x++)
-                    {
-                        float data = input[y * 28 + x];
-                        if (data > 0.9f)
-                        {
-                            Console.Write("$");
-                        }
-                        else if (data > 0.75f)
-                        {
-                            Console.Write("#");
-                        }
-                        else if (data > 0.6f)
-                        {
-                            Console.Write("Z");
-                        }
-                        else if (data > 0.5f)
-                        {
-                            Console.Write("t");
-                        }
-                        else if (data > 0.35f)
-                        {
-                            Console.Write("\\");
-                        }
-                        else if (data > 0.2f)
-                        {
-                            Console.Write("`");
-                        }
-                        else
-                        {
-                            Console.Write(" ");
-                        }
-                    }
-                    Console.WriteLine("");
-                }
+                Console.WriteLine(((MNISTDataset)trainingSet).GetImage(id));
                 Console.WriteLine("Number is : " + ((MNISTDataset)trainingSet).GetLabel(id));
 
                 float[] prediction = network.Predict(trainingSet, id);

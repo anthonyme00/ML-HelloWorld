@@ -161,6 +161,50 @@ namespace MachineLearning.Dataset
             return labels[dataIndex] == num;
         }
 
+        public string GetImage(int i)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            float[] imageData = GetInput(i);
+            for (int y = 0; y < 28; y++)
+            {
+                for (int x = 0; x < 28; x++)
+                {
+                    float data = imageData[y * 28 + x];
+                    if (data > 0.9f)
+                    {
+                        sb.Append("$");
+                    }
+                    else if (data > 0.75f)
+                    {
+                        sb.Append("$");
+                    }                    
+                    else if (data > 0.6f)
+                    {
+                        sb.Append("Z");
+                    }
+                    else if (data > 0.5f)
+                    {
+                        sb.Append("t");
+                    }
+                    else if (data > 0.35f)
+                    {
+                        sb.Append("\\");
+                    }
+                    else if (data > 0.2f)
+                    {
+                        sb.Append("`");
+                    }
+                    else
+                    {
+                        sb.Append(" ");
+                    }
+                }
+                sb.Append("\n");
+            }
+
+            return sb.ToString();
+        }
+
         public override string ToString()
         {
             return string.Format("Data count : {0}\nX Resolution : {1}\nY Resolution : {2}", count, columnCount, rowCount);
