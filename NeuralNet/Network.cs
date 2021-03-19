@@ -58,12 +58,12 @@ namespace MachineLearning.NeuralNet
             m_outputLayer.Backpropagate(expected, learningSpeed);
         }
 
-        public void ApplyChanges()
+        public void ApplyChanges(float learningSpeed)
         {
-            m_inputLayer.ApplyChanges();
+            m_inputLayer.ApplyChanges(learningSpeed);
             foreach(Layer layer in m_layers)
             {
-                layer.ApplyChanges();
+                layer.ApplyChanges(learningSpeed);
             }
         }
 
