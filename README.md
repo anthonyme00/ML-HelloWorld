@@ -23,7 +23,7 @@ Built from scratch only using the .NET Core library.
 
 # Note
 The accuracy of this particular implementation seems to hover around 70%-90% depending on the learningStep variable.
-An epoch of around 120 seems enough, and batch count of 100 seems to be good enough.
+An epoch of around 120 seems enough, and batch count of 100 seems to be good enough. (Assuming 2 hidden layers, Relu activation, with 16 nodes each)
 
 For the hidden layers, Relu activation is much much faster compared to sigmoid. at around 1200 epoch, the cost still hovers around 0.9.
 
