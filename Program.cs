@@ -45,6 +45,72 @@ namespace MachineLearning
                 }
             }
             Console.WriteLine(string.Format("Cost : {0,4:F2}\nCorrect percentage : {1,4:F2}", cost, ((float)correctPrediction / total) * 100f));
+
+            Random rand = new Random();
+            while (true)
+            {
+                int id = rand.Next(0, trainingSet.GetDataCount());
+
+                float[] input = trainingSet.GetInput(id);
+                for (int y = 0; y < 28; y++)
+                {
+                    for (int x = 0; x < 28; x++)
+                    {
+                        float data = input[y * 28 + x];
+                        if (data > 0.9f)
+                        {
+                            Console.Write("$");
+                        }
+                        else if (data > 0.75f)
+                        {
+                            Console.Write("#");
+                        }
+                        else if (data > 0.6f)
+                        {
+                            Console.Write("Z");
+                        }
+                        else if (data > 0.5f)
+                        {
+                            Console.Write("t");
+                        }
+                        else if (data > 0.35f)
+                        {
+                            Console.Write("\\");
+                        }
+                        else if (data > 0.2f)
+                        {
+                            Console.Write("`");
+                        }
+                        else
+                        {
+                            Console.Write(" ");
+                        }
+                    }
+                    Console.WriteLine("");
+                }
+                Console.WriteLine("Number is : " + ((MNISTDataset)trainingSet).GetLabel(id));
+
+                float[] prediction = network.Predict(trainingSet, id);
+                for (int i = 0; i < prediction.Length; i++)
+                {
+                    Console.Write(string.Format("{0} - {1,4:F2}%; ", i, prediction[i] * 100));
+                }
+                Console.WriteLine(string.Format("\nPredicted number is : {0}\n", ((MNISTDataset)trainingSet).PredictedNumber(prediction)));
+                Console.Write("\nTest again? (y/n)");
+                ConsoleKeyInfo key = Console.ReadKey();
+                Console.WriteLine("");
+                while (key.KeyChar != 'y' && key.KeyChar != 'n')
+                {
+                    Console.Write(string.Format("Test again? (y/n)"));
+                    key = Console.ReadKey();
+                    Console.WriteLine("");
+                }
+
+                if (key.KeyChar == 'n')
+                {
+                    break;
+                }
+            }
         }
     }
 }

@@ -108,7 +108,10 @@ namespace MachineLearning.Dataset
         public float[] GetInput(int i)
         {
             float[] inputArr = new float[byteCount];
-            Array.Copy(data, byteCount * i, inputArr, 0, byteCount);
+            for (int j = 0; j < byteCount; j++)
+            {
+                inputArr[j] = (data[byteCount * i + j])/255.0f;
+            }
             return inputArr;
         }
 
@@ -118,6 +121,11 @@ namespace MachineLearning.Dataset
             float[] target = new float[10];
             target[label] = 1.0f;
             return target;
+        }
+
+        public int GetLabel(int i)
+        {
+            return labels[i];
         }
 
         public int GetLabelCount()
