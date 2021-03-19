@@ -106,6 +106,47 @@ namespace MachineLearning.NeuralNet
             nextLayer.Predict();
         }
 
+        public virtual void Backpropagate(float[][] activationToCostChange, float learningRate)
+        {
+            if (activationToCostChange.Length != nextLayer.nodeCount)
+            {
+                throw new Exception("Input exceeds or is lower than node count!");
+            }
+
+            trainingCount++;
+
+            float[] output = GetOutput();
+
+            for (int j = 0; j < nextLayer.nodeCount; j++)
+            {
+                for (int k = 0; k < nextLayer.nodeCount; k++)
+                {
+                    for (int i = 0; i < nodeCount; i++)
+                    {
+                        deltaWeights[NodeToNodeWeightIndex(i, j)] += output[i] * activationToCostChange[j][k];
+                    }
+                    deltaBiases[j] += activationToCostChange[j][k];
+                }                
+            }
+
+            if (previousLayer == null) return;
+
+            float[] updatedChange = new float[nodeCount];
+
+            for (int i = 0; i < nodeCount; i++)
+            {
+                for (int j = 0; j < nextLayer.nodeCount; j++)
+                {
+                    for (int k = 0; k < nextLayer.nodeCount; k++)
+                    {
+                        updatedChange[i] += activation.derivativeFunc(inputs[i]) * weights[NodeToNodeWeightIndex(i, j)] * activationToCostChange[j][k];
+                    }
+                }
+            }
+
+            previousLayer.Backpropagate(updatedChange, learningRate);
+        }
+
         public virtual void Backpropagate(float[] activationToCostChange, float learningRate)
         {
             if (activationToCostChange.Length != nextLayer.nodeCount)
@@ -166,25 +207,49 @@ namespace MachineLearning.NeuralNet
 
     public class OutputLayer : Layer
     {
+        private CustomActivationSet customActivation = null;
+
         public OutputLayer(int nodeCount) : base(nodeCount, Activation.Sigmoid) { }
+        public OutputLayer(int nodeCount, CustomActivationSet customActivation) : base(nodeCount, Activation.Sigmoid)
+        {
+            this.customActivation = customActivation;
+        }
+        public override float[] GetOutput()
+        {
+            if (customActivation == null)
+            {
+                return base.GetOutput();
+            }
+            else
+            {
+                return customActivation.activationFunc(inputs);
+            }
+        }
 
         public virtual float CalculateCost(float[] intendedValue)
         {
-            if (intendedValue.Length != nodeCount)
+            if (customActivation == null)
             {
-                throw new Exception("Input exceeds or is lower than node count!");
+                if (intendedValue.Length != nodeCount)
+                {
+                    throw new Exception("Input exceeds or is lower than node count!");
+                }
+
+                float[] output = GetOutput();
+                float cost = 0;
+
+                for (int i = 0; i < nodeCount; i++)
+                {
+                    float costOfI = output[i] - intendedValue[i];
+                    cost += costOfI * costOfI;
+                }
+
+                return cost;
             }
-
-            float[] output = GetOutput();
-            float cost = 0;
-
-            for (int i = 0; i < nodeCount; i++)
+            else
             {
-                float costOfI = output[i] - intendedValue[i];
-                cost += costOfI * costOfI;
+                return customActivation.costFunc(GetOutput(), intendedValue);
             }
-
-            return cost;
         }
 
         public override void Backpropagate(float[] targetValue, float learningRate)
@@ -195,14 +260,34 @@ namespace MachineLearning.NeuralNet
             }
 
             float[] output = GetOutput();
+            /*if (customActivation == null)
+            {*/
             float[] layerChange = new float[nodeCount];
+
             for (int i = 0; i < nodeCount; i++)
             {
                 float costOfLayer = output[i] - targetValue[i];
-                layerChange[i] = activation.derivativeFunc(inputs[i]) * 2 * costOfLayer;
+                {
+                    layerChange[i] = activation.derivativeFunc(inputs[i]) * 2 * costOfLayer;
+                }
             }
-
             previousLayer.Backpropagate(layerChange, learningRate);
+            /*}
+            else
+            {
+                float[][] deriv = customActivation.derivativeFunc(inputs);
+                float[][] layerChange = new float[nodeCount][];
+                for (int i = 0; i < nodeCount; i++)
+                {
+                    layerChange[i] = new float[nodeCount];
+                    float costOfLayer = output[i] - targetValue[i];
+                    for (int j = 0; j < nodeCount; j++)
+                    {
+                        layerChange[i][j] += deriv[i][j] * 2 * costOfLayer;
+                    }                    
+                }
+                previousLayer.Backpropagate(layerChange, learningRate);
+            }*/
         }
     }
 }

@@ -11,16 +11,16 @@ namespace MachineLearning.NeuralNet
         private OutputLayer m_outputLayer;
 
         // Fit to a dataset
-        public Network(ILabeledData data)
+        public Network(ILabeledData data, CustomActivationSet customOutputActivation = null)
         {
             m_inputLayer = new InputLayer(data.GetDataDimension());
-            m_outputLayer = new OutputLayer(data.GetLabelDimension());
+            m_outputLayer = new OutputLayer(data.GetLabelDimension(), customOutputActivation);
         }
 
-        public Network(int inputSize, int outputSize)
+        public Network(int inputSize, int outputSize, CustomActivationSet customOutputActivation = null)
         {
             m_inputLayer = new InputLayer(inputSize);
-            m_outputLayer = new OutputLayer(outputSize);
+            m_outputLayer = new OutputLayer(outputSize, customOutputActivation);
         }
         
         public void AddLayer(Layer layer)

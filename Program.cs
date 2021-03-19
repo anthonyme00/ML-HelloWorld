@@ -9,8 +9,8 @@ namespace MachineLearning
     {
         static void Main(string[] args)
         {
-            float learningStep = 0.005f;
-            int epochCount = 100;
+            float learningStep = 0.001f;
+            int epochCount = 120;
             int batchCount = 100;
 
             ILabeledData trainingSet = MNISTDataset.LoadDataset("dataset/train-images.idx3-ubyte", "dataset/train-labels.idx1-ubyte");
@@ -19,7 +19,7 @@ namespace MachineLearning
             Console.WriteLine(string.Format("Training Dataset : \n{0}", (MNISTDataset)trainingSet));
             Console.WriteLine(string.Format("\nTesting Dataset : \n{0}", (MNISTDataset)testingSet));
 
-            Network network = new Network(trainingSet);
+            Network network = new Network(trainingSet, Activation.SoftMax);
             network.AddLayer(new Layer(16, Activation.Relu));
             network.AddLayer(new Layer(16, Activation.Relu));
             network.Build();
@@ -44,7 +44,7 @@ namespace MachineLearning
                     correctPrediction++;
                 }
             }
-            Console.WriteLine(string.Format("Cost : {0,4:F2}\nCorrect percentage : {1,4:F2}", cost, ((float)correctPrediction / total) * 100f));
+            Console.WriteLine(string.Format("Cost : {0,4:F2}\nCorrect percentage : {1,4:F2}", cost/total, ((float)correctPrediction / total) * 100f));
 
             Random rand = new Random();
             while (true)
