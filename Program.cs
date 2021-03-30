@@ -11,7 +11,7 @@ namespace MachineLearning
         {
             float learningStep = 0.0025f;
             int epochCount = 200;
-            int batchCount = 100;
+            int batchCount = 32;
 
             ILabeledData trainingSet = MNISTDataset.LoadDataset("dataset/train-images.idx3-ubyte", "dataset/train-labels.idx1-ubyte");
             ILabeledData testingSet = MNISTDataset.LoadDataset("dataset/t10k-images.idx3-ubyte", "dataset/t10k-labels.idx1-ubyte");
