@@ -9,21 +9,21 @@ namespace MachineLearning
     {
         static void Main(string[] args)
         {
-            float learningStep = 0.0025f;
-            int epochCount = 200;
+            float learningStep = 0.001f;
+            int epochCount = 100;
             int batchCount = 100;
 
-            ILabeledData trainingSet = MNISTDataset.LoadDataset("dataset/train-images.idx3-ubyte", "dataset/train-labels.idx1-ubyte");
-            ILabeledData testingSet = MNISTDataset.LoadDataset("dataset/t10k-images.idx3-ubyte", "dataset/t10k-labels.idx1-ubyte");
+            ILabeledData trainingSet = FashionMNISTDataset.LoadDataset("dataset/fashion-train-images-idx3-ubyte", "dataset/fashion-train-labels-idx1-ubyte");
+            ILabeledData testingSet = FashionMNISTDataset.LoadDataset("dataset/fashion-t10k-images-idx3-ubyte", "dataset/fashion-t10k-labels-idx1-ubyte");
 
             Console.WriteLine(string.Format("Training Dataset : \n{0}", (MNISTDataset)trainingSet));
             Console.WriteLine(string.Format("\nTesting Dataset : \n{0}", (MNISTDataset)testingSet));
 
             Network network = new Network(trainingSet);
-            network.AddLayer(new Layer(16, Activation.Relu));
+            network.AddLayer(new Layer(32, Activation.Relu));
             network.AddLayer(new Layer(16, Activation.Relu));
             network.Build();
-            Console.WriteLine(string.Format("Starting training\n\nepoch count : {0}\nbatch size : {1}\nlearning step : {2,4:F2}", epochCount, batchCount, learningStep));
+            Console.WriteLine(string.Format("Starting training\n\nepoch count : {0}\nbatch size : {1}\nlearning step : {2,4:F5}", epochCount, batchCount, learningStep));
 
             for (int epoch = 0; epoch < epochCount; epoch++)
             {
@@ -56,14 +56,16 @@ namespace MachineLearning
 
                 float[] input = trainingSet.GetInput(id);
                 Console.WriteLine(((MNISTDataset)trainingSet).GetImage(id));
-                Console.WriteLine("Number is : " + ((MNISTDataset)trainingSet).GetLabel(id));
+                Console.WriteLine(string.Format("Type is : {0}", ((FashionMNISTDataset)trainingSet).LabelName(id)));
 
                 float[] prediction = network.Predict(trainingSet, id);
                 for (int i = 0; i < prediction.Length; i++)
                 {
-                    Console.Write(string.Format("{0} - {1,4:F2}%; ", i, prediction[i] * 100));
+                    Console.Write(string.Format("{0} - {1,4:F2}%; ", ((FashionMNISTDataset)trainingSet).LabelName(i), prediction[i] * 100));
                 }
-                Console.WriteLine(string.Format("\nPredicted number is : {0}\n", ((MNISTDataset)trainingSet).PredictedNumber(prediction)));
+                int label = ((MNISTDataset)trainingSet).PredictedNumber(prediction);
+                Console.WriteLine(string.Format("\nPredicted type is : {0}\n", ((FashionMNISTDataset)trainingSet).LabelName(label)));
+
                 Console.Write("\nTest again? (y/n)");
                 ConsoleKeyInfo key = Console.ReadKey();
                 Console.WriteLine("");
